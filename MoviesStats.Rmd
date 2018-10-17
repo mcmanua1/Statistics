@@ -25,6 +25,8 @@ library(lmtest)
 ```
 
 ```{r}
+#Reading in Data set and cleaning into operatable form
+
 movies <- read.csv("~/math242/movies_metadata.csv")
 movies <- movies %>%
   select(budget, popularity, revenue, runtime, vote_average, vote_count)
@@ -44,6 +46,7 @@ movies <- movies%>%
 
 
 ```{r}
+#runing stepwise regression 
 movies1 <- movies 
 movies1 <- movies1 %>% na.omit
 null <- lm(popularity~1,data = movies1)
@@ -52,6 +55,7 @@ step(null, scope=list(lower=null, upper=full),direction="forward")
 ```
 
 ```{r}
+#Regression testing with model suggested by stepwise regression
 reg<- lm(formula = popularity ~ vote_average , data = movies1)
 summary(reg)
 
@@ -73,6 +77,7 @@ qqnorm(reg$res)
 ```
 Our initial model can shows that vote_average, or average rating, is significant shown by the small p-values. Although this model is not a good fit because the R squared value is very small. Specifically this model explained only 4.12% of the variation in the popularity of movies. In addition when you look at the histogram of the residuals you can see that it is slightly skewed to the right and thus not normal. This is also supported by the qqnorm plot not being linear. The residual plot shows some homoskedasticity and autocorrelation of the residuals. However, the homoskedasticity is not a big problem because of the large number of observations within this data set. 
 ```{r}
+#regression testing with adjusted model 
 reg<- lm(formula = popularity ~ vote_average + vote_count , data = movies1)
 summary(reg)
 
@@ -93,6 +98,7 @@ qqnorm(reg$res)
 ```
 
 ```{r}
+#More regression testing on updated models
 reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue , data = movies1)
 summary(reg)
 
@@ -113,6 +119,7 @@ qqnorm(reg$res)
 ```
 
 ```{r}
+#Another regression model and tests
 reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget, data = movies1)
 summary(reg)
 
@@ -134,6 +141,7 @@ qqnorm(reg$res)
 
 
 ```{r}
+#Testing more regression models
 reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget   + runtime, data = movies1)
 summary(reg)
 
@@ -155,6 +163,7 @@ qqnorm(reg$res)
 
 
 ```{r}
+#regression models
 reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget  + revenue + runtime, data = movies1)
 summary(reg)
 
@@ -175,6 +184,7 @@ qqnorm(reg$res)
 ```
 
 ```{r}
+#Regression testing of Final model
 reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget  + budget+ revenue + runtime, data = movies1)
 summary(reg)
 
@@ -195,11 +205,13 @@ qqnorm(reg$res)
 ```
 The final model that is suggested by the stepwise regression still provides all significant variables, which is shown by the small p-values. In addition, this model provides a reasonable R squared value (.5203). Specifically, this model explains 52.03% of the variation. We can also see from the histogram of the residuals that they are more normally distributed than the original model. The qqnorm plot still shows some non-linear trends, thus normality is a concer. In reguards to the homoskedasticity and autocorelation we can look at the residual plot and conclude that there is some heteroskedasticity and autocorelation but because of our 45,000 observations we are not concerned with those relative few large residuals. 
 ```{r}
+#Creating new data set to use with predictive model
 newdata = data.frame(vote_average = 9.4,revenue= 423918372, budget= 3089765, logbudget = log(3089765), logrevenue = log(423918372), runtime = 90, vote_count = 5000)
 predict(reg, newdata, interval = "predict")
 ```
 
 ```{r}
+#Another Adjustment to our Final Model
 reg<- lm(formula = log(popularity+1) ~ vote_average + vote_count + logrevenue + logbudget  + budget+ revenue + runtime, data = movies1)
 summary(reg)
 
