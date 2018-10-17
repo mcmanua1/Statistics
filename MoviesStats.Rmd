@@ -1,0 +1,223 @@
+---
+title: "Final Project"
+author: "Austin McManus"
+date: "5/6/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(ggplot2)
+library(car)
+library(leaps)
+library(bindrcpp)
+library(dplyr)
+library(datasets)
+library(rms)
+library(methods)
+library(knitr)
+library(ResourceSelection)
+library(sandwich)
+library(lmtest)
+```
+
+```{r}
+movies <- read.csv("~/math242/movies_metadata.csv")
+movies <- movies %>%
+  select(budget, popularity, revenue, runtime, vote_average, vote_count)
+
+
+movies$budget <- as.character(movies$budget)
+movies$popularity <- as.character(movies$popularity)
+
+movies$budget <- as.numeric(movies$budget)
+movies$popularity <- as.numeric(movies$popularity)
+
+movies <- movies %>%
+  mutate(logbudget = log(budget+1), logrevenue= log(revenue+1))
+movies <- movies%>%
+  filter(popularity <= 100)
+```
+
+
+```{r}
+movies1 <- movies 
+movies1 <- movies1 %>% na.omit
+null <- lm(popularity~1,data = movies1)
+full <- lm(popularity~.,data = movies1)
+step(null, scope=list(lower=null, upper=full),direction="forward")
+```
+
+```{r}
+reg<- lm(formula = popularity ~ vote_average , data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins = 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+
+```
+Our initial model can shows that vote_average, or average rating, is significant shown by the small p-values. Although this model is not a good fit because the R squared value is very small. Specifically this model explained only 4.12% of the variation in the popularity of movies. In addition when you look at the histogram of the residuals you can see that it is slightly skewed to the right and thus not normal. This is also supported by the qqnorm plot not being linear. The residual plot shows some homoskedasticity and autocorrelation of the residuals. However, the homoskedasticity is not a big problem because of the large number of observations within this data set. 
+```{r}
+reg<- lm(formula = popularity ~ vote_average + vote_count , data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins = 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+
+```{r}
+reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue , data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins = 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+
+```{r}
+reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget, data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins = 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+
+
+```{r}
+reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget   + runtime, data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins = 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+
+
+```{r}
+reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget  + revenue + runtime, data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins= 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+
+```{r}
+reg<- lm(formula = popularity ~ vote_average + vote_count + logrevenue + logbudget  + budget+ revenue + runtime, data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins= 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+The final model that is suggested by the stepwise regression still provides all significant variables, which is shown by the small p-values. In addition, this model provides a reasonable R squared value (.5203). Specifically, this model explains 52.03% of the variation. We can also see from the histogram of the residuals that they are more normally distributed than the original model. The qqnorm plot still shows some non-linear trends, thus normality is a concer. In reguards to the homoskedasticity and autocorelation we can look at the residual plot and conclude that there is some heteroskedasticity and autocorelation but because of our 45,000 observations we are not concerned with those relative few large residuals. 
+```{r}
+newdata = data.frame(vote_average = 9.4,revenue= 423918372, budget= 3089765, logbudget = log(3089765), logrevenue = log(423918372), runtime = 90, vote_count = 5000)
+predict(reg, newdata, interval = "predict")
+```
+
+```{r}
+reg<- lm(formula = log(popularity+1) ~ vote_average + vote_count + logrevenue + logbudget  + budget+ revenue + runtime, data = movies1)
+summary(reg)
+
+
+movies2 <- cbind(movies1,reg$residuals, reg$fitted.values)
+movies2 <- movies2 %>%
+  rename(res = "reg$residuals", fit= "reg$fitted.values")
+
+movies2 %>%
+  ggplot(aes(res))+
+  geom_histogram(bins= 500)
+movies2 %>%
+  ggplot(aes(fit,res))+
+  geom_point()
+
+ncvTest(reg)
+qqnorm(reg$res)
+```
+```
+In this transformed model we can see that the transformation helped normality. THe histogram of the residuals now appears to be roughly normal, and the qqnorm plot appears to be roughly linear. Thus normality is not a concern anymore. Homoskedasticity also appears to be now present within the residual plot. However, the residual plot shows some major signs of autocorrelation, but since our data set has no more additional variables we can not address it. In addition, this model has decreased in the R squared value, which is now .448. Meaning that only 44.8% of the variation of movie popularity is explained by this model.
+
